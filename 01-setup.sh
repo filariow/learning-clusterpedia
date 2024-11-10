@@ -2,14 +2,14 @@
 
 set -e
 
-export KUBECONFIG=/tmp/clusterpedia.kcfg
+export KUBECONFIG=/tmp/clusterpedia/clusterpedia-clusters.kcfg
 
 helm repo add clusterpedia https://clusterpedia-io.github.io/clusterpedia-helm/ --force-update
 helm repo update
-helm install --kube-context=kind-clusterpedia \
+helm install \
   clusterpedia clusterpedia/clusterpedia \
   --namespace clusterpedia \
-  --kube-context kind-clusterpedia \
+  --kube-context kind-clusterpedia-host \
   --create-namespace \
   --set persistenceMatchNode=None \
   --set installCRDs=true
@@ -24,7 +24,7 @@ for i in {1..2}; do
   SYNCHRO_CA=$(kubectl get configmaps --context "kind-clusterpedia-member-${i}" kube-root-ca.crt -o jsonpath='{.data.ca\.crt}' | base64 -w 0)
   SYNCHRO_TOKEN=$(kubectl -n default --context "kind-clusterpedia-member-${i}" create token clusterpedia-synchro | base64 -w 0 )
 
-  cat << EOF | kubectl apply -f - --context kind-clusterpedia
+  cat << EOF | kubectl apply -f - --context kind-clusterpedia-host
 apiVersion: cluster.clusterpedia.io/v1alpha2
 kind: PediaCluster
 metadata:
